@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/apps/postgres_data:/var/lib/postgresql/data
+      - ./init_script.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_PASSWORD=my_pass
+      - POSTGRES_USER=my_user
+      - POSTGRES_DB=gcpco
+  db_clients:
+    image: postgres:15-alpine
+    ports:
+      - 5433:5432
+    volumes:
+      - ~/apps/postgres_data_clients:/var/lib/postgresql/data
+      - ./init_script.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_PASSWORD=my_pass
+      - POSTGRES_USER=my_user
+      - POSTGRES_DB=gcpco_clients
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
