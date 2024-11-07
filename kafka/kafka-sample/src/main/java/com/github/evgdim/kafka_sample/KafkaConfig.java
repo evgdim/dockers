@@ -26,7 +26,7 @@ import static org.apache.kafka.streams.StreamsConfig.*;
 @EnableKafkaStreams
 public class KafkaConfig {
     Logger logger = LoggerFactory.getLogger(KafkaConfig.class);
-    private static final Serde<String> STRING_SERDE = Serdes.String();
+    public static final Serde<String> STRING_SERDE = Serdes.String();
     public static final String INPUT_TOPIC = "input-topic";
     public static final String OUTPUT_TOPIC = "output-topic";
 
@@ -35,23 +35,23 @@ public class KafkaConfig {
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     KafkaStreamsConfiguration kStreamsConfig() {
+        Map<String, Object> props = getKafkaConfigProps(bootstrapAddress);
+        return new KafkaStreamsConfiguration(props);
+    }
+
+    public static Map<String, Object> getKafkaConfigProps(String bootstrapAddress) {
         Map<String, Object> props = new HashMap<>();
         props.put(APPLICATION_ID_CONFIG, "streams-app");
         props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-
-        return new KafkaStreamsConfiguration(props);
+        return props;
     }
 
 
     @Bean
     KStream<String, String> buildPipeline(StreamsBuilder streamsBuilder) {
-        KStream<String, String> stream = streamsBuilder
-                .stream(INPUT_TOPIC, Consumed.with(STRING_SERDE, STRING_SERDE))
-                .mapValues(string -> string.toUpperCase());
-        stream.to(OUTPUT_TOPIC);
-        return stream;
+        return buildUppercaseStream(streamsBuilder);
 
 //        KTable<String, Long> wordCounts = messageStream
 //                .mapValues((ValueMapper<String, String>) String::toLowerCase)
@@ -59,6 +59,14 @@ public class KafkaConfig {
 //                .groupBy((key, word) -> word, Grouped.with(STRING_SERDE, STRING_SERDE))
 //                .count();
 
+    }
+
+    public static KStream<String, String> buildUppercaseStream(StreamsBuilder streamsBuilder) {
+        KStream<String, String> stream = streamsBuilder
+                .stream(INPUT_TOPIC, Consumed.with(STRING_SERDE, STRING_SERDE))
+                .mapValues(string -> string.toUpperCase());
+        stream.to(OUTPUT_TOPIC);
+        return stream;
     }
 
 
